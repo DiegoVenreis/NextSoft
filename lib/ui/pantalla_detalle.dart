@@ -29,6 +29,23 @@ class _PantallaDetalleState extends State<PantallaDetalle> {
     }
   }
 
+  Future<void> cambiarPrioridad(String? valor) async {
+    if (valor == null || !Incidencia.prioridadValida.contains(valor)) return;
+    setState(() => guardando = true);
+    try{
+      await widget.gestor.cambiarPrioridad(widget.id, valor);
+      if (mounted) setState(() {});
+    } catch (e){
+      if (mounted){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo cargar la prioridad: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => guardando = false);
+    }
+  }
+
   Widget fila(String etiqueta, String valor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
@@ -67,6 +84,15 @@ class _PantallaDetalleState extends State<PantallaDetalle> {
                           fila('Descripción', item.descripcion),
                         ]),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: item.prioridad,
+                      decoration: const InputDecoration(labelText: 'Prioridad', border: OutlineInputBorder()),
+                      items: Incidencia.prioridadValida
+                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                        .toList(), 
+                      onChanged: guardando ? null : cambiarPrioridad,
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
