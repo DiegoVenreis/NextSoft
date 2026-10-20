@@ -16,6 +16,15 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   bool cargando = true;
   String? error;
   String busqueda = '';
+  String estadoSelec = 'Todos';
+  String prioSelec = 'Todas';
+  final TextEditingController controlSearch = TextEditingController();
+
+  @override
+  void dispose() {
+    controlSearch.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -84,7 +93,11 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
   @override
   Widget build(BuildContext context) {
-    final items = g.buscar(busqueda);
+    final items = g.buscar(busqueda).where((item) {
+      final coincidenceState = estadoSelec == 'Todos' || item.estado == estadoSelec;
+      final coincidencePrior = prioSelec == 'Todas' || item.prioridad == prioSelec;
+      return coincidenceState && coincidencePrior;
+    }).toList();
     return Scaffold(
       appBar: AppBar(
         title: const Text('NexaSoft | Incidencias'),
@@ -161,10 +174,72 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                           ),
                         ),
                         Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: estadoSelec,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Filtro Estado',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  ),
+                                  items: const[
+                                    DropdownMenuItem(value: 'Todos', child: Text('Todos')),
+                                    DropdownMenuItem(value: 'Pendiente', child: Text('Pendiente')),
+                                    DropdownMenuItem(value: 'En proceso', child: Text('En proceso')),
+                                    DropdownMenuItem(value: 'Resuelta', child: Text('Resuelta')),
+                                  ],
+                                  onChanged: (valor){
+                                    if (valor != null) setState(() => estadoSelec = valor);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 10,),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: prioSelec,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Filtro prioridad',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  ),
+                                  items: const[
+                                    DropdownMenuItem(value: 'Todas', child: Text('Todas')),
+                                    DropdownMenuItem(value: 'Baja', child: Text('Baja')),
+                                    DropdownMenuItem(value: 'Media', child: Text('Media')),
+                                    DropdownMenuItem(value: 'Alta', child: Text('Alta')),
+                                  ],
+                                  onChanged: (valor){
+                                    if (valor != null) setState(() => prioSelec = valor);
+                                  }
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text('${items.length} registros', style: const TextStyle(color: Colors.black54)),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text('${items.length} registros',
+                                style: const TextStyle(color: Colors.black54)),
+                              ),
+                              TextButton.icon(
+                                onPressed: (){
+                                  setState((){
+                                    busqueda = '';
+                                    controlSearch.clear();
+                                    estadoSelec = 'Todos';
+                                    prioSelec = 'Todas';
+                                  });
+                                },
+                                icon: const Icon(Icons.filter_alt_off),
+                                label: const Text('Limpiar consulta'),
+                              ),
+                            ],
                           ),
                         ),
                         Expanded(
